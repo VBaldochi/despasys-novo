@@ -1,0 +1,18 @@
+# --- Framework principal ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# --- Banco de dados ---
+sqlalchemy[asyncio]==2.0.32
+asyncpg==0.29.0   # driver para Postgres async
+
+# --- Machine Learning ---
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==1.26.4
+
+# --- Autenticação JWT ---
+python-jose==3.3.0
+
+# --- Utilitários ---
+python-multipart==0.0.9  # para upload de arquivos CSV

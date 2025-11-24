@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+reco-api/service_reco_pipeline.joblib
+*.joblib
