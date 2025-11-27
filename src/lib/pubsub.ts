@@ -1,11 +1,14 @@
 // Google Cloud Pub/Sub Configuration
 import { PubSub } from '@google-cloud/pubsub'
+import { relayEventToFirebase } from './event-relay'
 
 // Initialize Pub/Sub client
 export const pubsub = new PubSub({
   projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
   keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
 })
+
+const shouldMirrorDirectly = process.env.DIRECT_FIREBASE_EVENT_BRIDGE === 'true'
 
 // Event Bus para publicar eventos
 export class DespaSysEventBus {
@@ -53,6 +56,16 @@ export class DespaSysEventBus {
       })
       
       console.log(`📡 Evento publicado: ${eventType} (${messageId})`)
+
+      if (shouldMirrorDirectly) {
+        try {
+          await relayEventToFirebase(message)
+          console.log(`🔁 Evento refletido no Firebase (modo direto)`)
+        } catch (relayError) {
+          console.error('⚠️ Falha ao refletir evento diretamente:', relayError)
+        }
+      }
+
       return messageId
       
     } catch (error) {

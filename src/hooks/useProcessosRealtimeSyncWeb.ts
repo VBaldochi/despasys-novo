@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { database } from '../lib/firebase';
 import { ref, onValue, off } from 'firebase/database';
 
-export type EventType = 'process' | 'client' | 'notification' | 'system';
+export type EventType = 'processes' | 'clients' | 'notifications' | 'system';
 
 export interface DespaSysEvent {
   id: string;
@@ -25,7 +25,7 @@ export function useProcessosRealtimeSyncWeb(
 ) {
   useEffect(() => {
     if (!tenantId) return;
-    const eventPath = `tenants/${tenantId}/events/process`;
+    const eventPath = `tenants/${tenantId}/events/processes`;
     const eventRef = ref(database, eventPath);
 
     const handleValue = (snapshot: any) => {
@@ -38,7 +38,7 @@ export function useProcessosRealtimeSyncWeb(
             onEvent({
               id: eventId,
               tenantId,
-              type: 'process',
+              type: 'processes',
               action: eventData.action,
               data: eventData.data,
               timestamp: eventData.timestamp,

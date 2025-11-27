@@ -2,7 +2,7 @@
 import { database } from './firebase'
 import { ref, onValue, off, DataSnapshot } from 'firebase/database'
 
-export type EventType = 'process' | 'client' | 'notification' | 'system'
+export type EventType = 'processes' | 'clients' | 'notifications' | 'system'
 
 export interface DespaSysEvent {
   id: string
@@ -25,14 +25,14 @@ class RealtimeSyncService {
   /**
    * Conectar a eventos de um tenant específico
    */
-  connectToTenant(tenantId: string, eventTypes: EventType[] = ['process', 'client', 'notification']) {
+  connectToTenant(tenantId: string, eventTypes: EventType[] = ['processes', 'clients', 'notifications']) {
     console.log(`🔗 [MOBILE] Conectando ao tenant: ${tenantId}`)
     
     eventTypes.forEach(eventType => {
       // Paths diferentes para cada tipo de evento
       let eventPath: string
       
-      if (eventType === 'notification') {
+      if (eventType === 'notifications') {
         eventPath = `tenants/${tenantId}/notifications`
       } else {
         eventPath = `tenants/${tenantId}/events/${eventType}`
@@ -50,12 +50,12 @@ class RealtimeSyncService {
           console.log(`📊 [MOBILE] Dados:`, Object.keys(data))
           
           // Para notificações, converter para formato de evento
-          if (eventType === 'notification') {
+          if (eventType === 'notifications') {
             const notifications = Object.entries(data)
               .map(([notifId, notifData]: [string, any]) => ({
                 id: notifId,
                 tenantId,
-                type: 'notification' as EventType,
+                type: 'notifications' as EventType,
                 action: 'created',
                 data: notifData,
                 timestamp: notifData.createdAt || Date.now(),
