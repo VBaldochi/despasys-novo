@@ -9,7 +9,7 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET!;
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { customerId: string } }
+  { params }: { params: Promise<{ customerId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    const { customerId } = params;
+    const { customerId } = await params;
 
     // Buscar cliente com histórico
     const customer = await prisma.customer.findUnique({
