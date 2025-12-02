@@ -25,7 +25,7 @@ import NovoProcessoModal from '@/components/admin/NovoProcessoModal'
 export default function ProcessosPage() {
   const toast = useToastHelpers()
   const { session } = useSessionSync()
-  const tenantId = session?.user?.tenantId || session?.tenantId || 'defaultTenant'
+  const tenantId = session?.user?.tenantId || 'defaultTenant'
 
   // Atualiza lista de processos em tempo real
   const handleProcessEvent = useCallback((event: DespaSysEvent) => {
