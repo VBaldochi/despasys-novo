@@ -37,6 +37,8 @@ interface Transfer {
   completedDate?: string
   saleValue: number
   value: number
+  transferValue?: number
+  serviceValue?: number
   fees: {
     detran: number
     service: number

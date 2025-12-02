@@ -67,12 +67,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { placa, modelo, marca, ano, cor, renavam, chassi, customerId } = body;
+    const { placa, modelo, marca, ano, anoModelo, cor, combustivel, categoria, renavam, chassi, customerId } = body;
 
     // Validação básica
-    if (!placa || !modelo) {
+    if (!placa || !modelo || !marca || !ano || !cor || !combustivel || !categoria || !customerId) {
       return NextResponse.json(
-        { error: 'Campos obrigatórios: placa, modelo' },
+        { error: 'Campos obrigatórios: placa, modelo, marca, ano, cor, combustivel, categoria, customerId' },
         { status: 400 }
       );
     }
@@ -94,15 +94,18 @@ export async function POST(request: NextRequest) {
 
     const veiculo = await prisma.veiculo.create({
       data: {
-        tenantId,
+        tenant: { connect: { id: tenantId } },
+        customer: { connect: { id: customerId } },
         placa: placa.toUpperCase(),
         modelo,
-        marca: marca || null,
-        ano: ano || null,
-        cor: cor || null,
+        marca,
+        ano: parseInt(ano),
+        anoModelo: anoModelo ? parseInt(anoModelo) : parseInt(ano),
+        cor,
+        combustivel,
+        categoria,
         renavam: renavam || null,
         chassi: chassi || null,
-        customerId: customerId || null,
       },
       include: {
         customer: {
