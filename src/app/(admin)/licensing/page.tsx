@@ -36,6 +36,7 @@ interface Licensing {
   requestedDate: string
   completedDate?: string
   value: number
+  totalValue?: number
   fees: {
     detran: number
     service: number
