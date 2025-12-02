@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, User, Phone, Mail, MapPin, FileText, Calendar, TrendingUp } from 'lucide-react';
 import { MLRecommendations } from '@/components/MLRecommendations';
 
@@ -27,8 +27,9 @@ interface Process {
   valorTotal: number;
 }
 
-export default function CustomerDetailPage({ params }: { params: { id: string } }) {
+export default function CustomerDetailPage() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
   const [customer, setCustomer] = useState<CustomerDetails | null>(null);
   const [processes, setProcesses] = useState<Process[]>([]);
   const [loading, setLoading] = useState(true);
