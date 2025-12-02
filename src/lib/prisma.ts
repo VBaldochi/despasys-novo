@@ -1,20 +1,37 @@
 import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
+function createPrismaClient() {
+  // Verificar se DATABASE_URL está definida
+  if (!process.env.DATABASE_URL) {
+    console.warn('DATABASE_URL not defined, Prisma client may not work properly')
+  }
+  
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+    transactionOptions: {
+      timeout: 10000,
+      maxWait: 5000,
     }
-  },
-  // Configurações de conexão otimizadas
-  transactionOptions: {
-    timeout: 10000, // 10 segundos
-    maxWait: 5000,  // 5 segundos max wait
+  })
+}
+
+// Usar getter para lazy initialization - só cria quando realmente for usado em runtime
+let _prisma: PrismaClient | undefined
+
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(target, prop) {
+    if (!_prisma) {
+      _prisma = global.prisma || createPrismaClient()
+      if (process.env.NODE_ENV !== 'production') {
+        global.prisma = _prisma
+      }
+    }
+    return (_prisma as any)[prop]
   }
 })
 
@@ -57,26 +74,3 @@ export async function executeWithRetry<T>(
   
   throw lastError!
 }
-
-// Configurar graceful shutdown apenas uma vez
-if (typeof window === 'undefined') {
-  let shutdownHandlersAdded = false
-  
-  if (!shutdownHandlersAdded) {
-    shutdownHandlersAdded = true
-    
-    process.on('SIGINT', async () => {
-      console.log('Received SIGINT, disconnecting from database...')
-      await prisma.$disconnect()
-      process.exit(0)
-    })
-    
-    process.on('SIGTERM', async () => {
-      console.log('Received SIGTERM, disconnecting from database...')
-      await prisma.$disconnect()
-      process.exit(0)
-    })
-  }
-}
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

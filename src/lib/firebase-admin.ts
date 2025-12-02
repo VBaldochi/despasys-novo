@@ -1,11 +1,16 @@
 // Firebase Admin SDK Configuration (Server-Side)
-import { initializeApp, getApps, cert } from 'firebase-admin/app'
-import { getDatabase } from 'firebase-admin/database'
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app'
+import { getDatabase, Database } from 'firebase-admin/database'
 import * as fs from 'fs'
-import * as path from 'path'
 
-// Inicializar Firebase Admin apenas uma vez
-if (!getApps().length) {
+let firebaseApp: App | null = null
+let _adminDatabase: Database | null = null
+
+function initializeFirebaseAdmin(): App | null {
+  if (getApps().length > 0) {
+    return getApps()[0]
+  }
+
   try {
     console.log('🔥 Inicializando Firebase Admin SDK...')
     
@@ -17,7 +22,7 @@ if (!getApps().length) {
       const serviceAccountJson = fs.readFileSync(credentialsPath, 'utf8')
       const serviceAccount = JSON.parse(serviceAccountJson)
       
-      initializeApp({
+      return initializeApp({
         credential: cert(serviceAccount),
         databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
       })
@@ -30,10 +35,13 @@ if (!getApps().length) {
       const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
       
       if (!clientEmail || !privateKey) {
-        throw new Error('FIREBASE_CLIENT_EMAIL e FIREBASE_PRIVATE_KEY são obrigatórios!')
+        // Durante o build, não temos as variáveis de ambiente
+        // Só logamos um aviso em vez de lançar erro
+        console.warn('⚠️ FIREBASE_CLIENT_EMAIL e FIREBASE_PRIVATE_KEY não configurados. Firebase Admin não será inicializado.')
+        return null
       }
       
-      initializeApp({
+      return initializeApp({
         credential: cert({
           projectId,
           clientEmail,
@@ -43,15 +51,34 @@ if (!getApps().length) {
       })
     }
     
-    console.log('✅ Firebase Admin inicializado com sucesso!')
-    
   } catch (error) {
     console.error('❌ Erro ao inicializar Firebase Admin:', error)
-    throw error
+    return null
   }
 }
 
-// Exportar database Admin
-export const adminDatabase = getDatabase()
+// Lazy initialization
+export function getAdminDatabase(): Database | null {
+  if (!_adminDatabase) {
+    firebaseApp = initializeFirebaseAdmin()
+    if (firebaseApp) {
+      _adminDatabase = getDatabase()
+      console.log('✅ Firebase Admin inicializado com sucesso!')
+      console.log('📡 Firebase Admin Database disponível')
+    }
+  }
+  return _adminDatabase
+}
 
-console.log('📡 Firebase Admin Database disponível')
+// Export para compatibilidade com código existente
+// Usa um getter para lazy loading
+export const adminDatabase = new Proxy({} as Database, {
+  get(target, prop) {
+    const db = getAdminDatabase()
+    if (!db) {
+      console.warn('⚠️ Firebase Admin Database não disponível')
+      return undefined
+    }
+    return (db as any)[prop]
+  }
+})
